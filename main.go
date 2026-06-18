@@ -12,7 +12,7 @@ import (
 func main() {
 	slog.Info("Iniciando app - CRUD de usuários")
 
-	if err := server.Init(); err != nil {
+	if err := server.Create(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			slog.Warn("Shutdown the server and services...")
 			os.Exit(0)

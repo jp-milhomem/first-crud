@@ -1,4 +1,4 @@
-package storage
+package database
 
 import (
 	"encoding/json"
@@ -6,23 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/jp-milhomem/first-crud/utils"
 )
-
-//útils
-
-func sendJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(status)
-
-	resp, err := json.Marshal(data)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	w.Write(resp)
-}
 
 // types
 type Database struct {
@@ -42,11 +28,13 @@ type UpdateUser struct {
 	Biography string `json:"biography,omitempty"`
 }
 
-// Init database
-func Init() *Database {
-	db := Database{}
+//útils
 
-	db.appData = make(map[int]User)
+// Init database
+func Create() *Database {
+	db := Database{
+		appData: map[int]User{},
+	}
 
 	return &db
 }
@@ -73,7 +61,7 @@ func (db Database) Insert() http.HandlerFunc {
 
 		db.appData[int(id)] = *user
 
-		sendJSON(w, 201, "Msg: Usuário inserido com sucesso")
+		utils.SendJSON(w, 201, user.Id)
 
 	}
 }
@@ -88,17 +76,17 @@ func (db Database) FIndById() http.HandlerFunc {
 			return
 		}
 
-		user := db.appData[int(id64)]
+		data := db.appData[int(id64)]
 
-		data, _ := json.Marshal(user)
+		user, _ := json.Marshal(data)
 
-		w.Write(data)
+		utils.SendJSON(w, 200, user)
 	}
 }
 
 func (db Database) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sendJSON(w, 200, db.appData)
+		utils.SendJSON(w, 200, db.appData)
 	}
 }
 
@@ -111,13 +99,15 @@ func (db Database) Delete() http.HandlerFunc {
 		_, ok := db.appData[int(id)]
 
 		if !ok {
-			sendJSON(w, 400, "Usuário não encontrado")
+			utils.SendJSON(w, 400, utils.Response{
+				Err: "usuário não encontrado",
+			})
 			return
 		}
 
 		delete(db.appData, int(id))
 
-		sendJSON(w, 200, db)
+		utils.SendJSON(w, 200, db)
 	}
 }
 
@@ -129,7 +119,7 @@ func (db Database) Update() http.HandlerFunc {
 		user, ok := db.appData[int(id64)]
 
 		if !ok {
-			sendJSON(w, 400, "Usuário não encontrado")
+			utils.SendJSON(w, 400, "Usuário não encontrado")
 			return
 		}
 
@@ -150,7 +140,7 @@ func (db Database) Update() http.HandlerFunc {
 
 		db.appData[int(id64)] = user
 
-		sendJSON(w, 200, db)
+		utils.SendJSON(w, 200, db)
 
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	storage "github.com/jp-milhomem/first-crud/database"
+	"github.com/jp-milhomem/first-crud/database"
 )
 
 //Tipagens
@@ -158,7 +158,7 @@ func NewHandler() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
 
-	database := storage.Init()
+	database := database.Create()
 
 	//Routes
 
