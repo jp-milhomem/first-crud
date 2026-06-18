@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	storage "github.com/jp-milhomem/first-crud/database"
 	"github.com/jp-milhomem/first-crud/handlers"
 )
 
@@ -14,13 +15,16 @@ type Application struct {
 
 func Init() error {
 
+	db := storage.Database{}
+	_ = db
+
 	app := Application{
 		data: make(map[int]handlers.User),
 	}
 
 	app.data[1] = handlers.User{Id: "1", FirstName: "admin", LastName: "admin", Biography: "The manager"}
 
-	handler := handlers.NewHandler(app.data)
+	handler := handlers.NewHandler()
 
 	s := http.Server{
 		Addr:           "localhost:8082",
