@@ -42,6 +42,15 @@ type UpdateUser struct {
 	Biography string `json:"biography,omitempty"`
 }
 
+// Init database
+func Init() *Database {
+	db := Database{}
+
+	db.appData = make(map[int]User)
+
+	return &db
+}
+
 //Méthods
 
 func (db Database) Insert() http.HandlerFunc {

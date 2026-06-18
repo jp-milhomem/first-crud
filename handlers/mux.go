@@ -158,9 +158,7 @@ func NewHandler() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
 
-	database := storage.Database{}
-
-	fmt.Println(database)
+	database := storage.Init()
 
 	//Routes
 
