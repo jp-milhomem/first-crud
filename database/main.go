@@ -2,8 +2,6 @@ package database
 
 import (
 	"encoding/json"
-	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -16,10 +14,10 @@ type Database struct {
 }
 
 type User struct {
-	Id        string `json:"id,omitempty"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
-	Biography string `json:"biography,omitempty"`
+	Id        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Biography string `json:"biography"`
 }
 
 type UpdateUser struct {
@@ -51,42 +49,62 @@ func (db Database) Insert() http.HandlerFunc {
 		err = json.NewDecoder(r.Body).Decode(user)
 
 		if err != nil {
-			slog.Error(err.Error())
+			utils.SendJSON(w, http.StatusBadRequest, utils.Response{
+				Err: "Invalid body",
+			})
 			return
 		}
 
-		fmt.Println(user)
+		id, err := strconv.ParseInt(user.Id, 10, 64)
 
-		id, _ := strconv.ParseInt(user.Id, 10, 64)
+		if err != nil {
+			utils.SendJSON(w, http.StatusNotFound, utils.Response{
+				Err: "Invalid Id",
+			})
+		}
 
 		db.appData[int(id)] = *user
 
-		utils.SendJSON(w, 201, user.Id)
+		utils.SendJSON(w, http.StatusCreated, utils.Response{
+			Data: user.Id,
+		})
 
 	}
 }
 
-func (db Database) FIndById() http.HandlerFunc {
+func (db Database) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		id64, err := strconv.ParseInt(id, 10, 64)
 
 		if err != nil {
-			slog.Error(err.Error())
+			utils.SendJSON(w, http.StatusBadRequest, utils.Response{
+				Err: "Invalid Id",
+			})
 			return
 		}
 
-		data := db.appData[int(id64)]
+		user, ok := db.appData[int(id64)]
 
-		user, _ := json.Marshal(data)
+		if !ok {
+			utils.SendJSON(w, http.StatusNotFound, utils.Response{
+				Err: "Usuário não encontrado",
+			})
+		}
 
-		utils.SendJSON(w, 200, user)
+		utils.SendJSON(w, http.StatusFound, utils.Response{
+			Data: user,
+		})
 	}
 }
 
 func (db Database) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		utils.SendJSON(w, 200, db.appData)
+		users := db.appData
+
+		utils.SendJSON(w, http.StatusFound, utils.Response{
+			Data: users,
+		})
 	}
 }
 
@@ -99,15 +117,17 @@ func (db Database) Delete() http.HandlerFunc {
 		_, ok := db.appData[int(id)]
 
 		if !ok {
-			utils.SendJSON(w, 400, utils.Response{
-				Err: "usuário não encontrado",
+			utils.SendJSON(w, http.StatusNotFound, utils.Response{
+				Err: "User not found",
 			})
 			return
 		}
 
 		delete(db.appData, int(id))
 
-		utils.SendJSON(w, 200, db)
+		utils.SendJSON(w, http.StatusAccepted, utils.Response{
+			Data: "Deleted with success",
+		})
 	}
 }
 
@@ -119,12 +139,22 @@ func (db Database) Update() http.HandlerFunc {
 		user, ok := db.appData[int(id64)]
 
 		if !ok {
-			utils.SendJSON(w, 400, "Usuário não encontrado")
+			utils.SendJSON(w, 400, utils.Response{
+				Err: "Usuário não encontrado",
+			})
+
 			return
 		}
 
 		updateUser := UpdateUser{}
-		json.NewDecoder(r.Body).Decode(&updateUser)
+
+		err := json.NewDecoder(r.Body).Decode(&updateUser)
+
+		if err != nil {
+			utils.SendJSON(w, http.StatusBadRequest, utils.Response{
+				Err: "Invalid body",
+			})
+		}
 
 		if updateUser.Biography != "" {
 			user.Biography = updateUser.Biography
@@ -140,7 +170,9 @@ func (db Database) Update() http.HandlerFunc {
 
 		db.appData[int(id64)] = user
 
-		utils.SendJSON(w, 200, db)
+		utils.SendJSON(w, http.StatusCreated, utils.Response{
+			Data: user,
+		})
 
 	}
 }

@@ -8,10 +8,6 @@ import (
 	"github.com/jp-milhomem/first-crud/handlers"
 )
 
-type Application struct {
-	data map[int]handlers.User
-}
-
 func Create() error {
 	mux := handlers.NewHandler()
 
