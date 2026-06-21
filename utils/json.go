@@ -5,28 +5,28 @@ import (
 	"net/http"
 )
 
+func SetJSON(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
 type Response struct {
-	Data any
-	Err  string
+	Data any    `json:"data,omitempty"`
+	Err  string `json:"err,omitempty"`
 }
 
 func SendJSON(w http.ResponseWriter, status int, res Response) {
+	w.WriteHeader(status)
 
-	if res.Err != "" {
-		SendJSON(w, status, Response{
-			Err: res.Err,
-		})
-	}
-
-	data, err := json.Marshal(res.Data)
+	data, err := json.Marshal(res)
 
 	if err != nil {
-		SendJSON(w, 500, Response{
-			Err: "Internal server error",
-		})
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal server error"))
+		return
 	}
 
 	w.Write(data)
-	w.WriteHeader(status)
-
 }

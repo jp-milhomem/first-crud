@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -24,7 +23,6 @@ func Create() error {
 		return err
 	}
 
-	fmt.Println("Server is on...")
 	return nil
 
 }
